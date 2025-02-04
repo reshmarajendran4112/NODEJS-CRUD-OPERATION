@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js CRUD OPERATION project</title>
+    
+    <script>
+        let editingId = null;
+
+        // Load table data on page load
+        window.onload = () => {
+            fetchData();
+        };
+
+        // Fetch and display data
+        function fetchData() {
+            fetch("http://localhost:5000/names")
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById("data-table-body");
+                    tableBody.innerHTML = "";
+                    data.forEach(item => {
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>
+                                    <button onclick="editData(${item.id}, '${item.name}')">Edit</button>
+                                    <button onclick="deleteData(${item.id})">Delete</button>
+                                </td>
+                            </tr>`;
+                    });
+                });
+        }
+
+        // Add or update data
+        function handleSubmit() {
+            const nameInput = document.getElementById("name").value;
+
+            if (editingId) {
+                // Update existing data
+                fetch(`http://localhost:5000/names/${editingId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: nameInput })
+                }).then(() => {
+                    editingId = null;
+                    document.getElementById("submit-btn").innerText = "Add";
+                    document.getElementById("name").value = "";
+                    fetchData();
+                });
+            } else {
+                // Add new data
+                fetch("http://localhost:5000/names", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: nameInput })
+                }).then(() => {
+                    document.getElementById("name").value = "";
+                    fetchData();
+                });
+            }
+        }
+
+        // Edit data (fill input and change button)
+        function editData(id, name) {
+            document.getElementById("name").value = name;
+            document.getElementById("submit-btn").innerText = "Update";
+            editingId = id;
+        }
+
+        // Delete data
+        function deleteData(id) {
+            fetch(`http://localhost:5000/names/${id}`, { method: "DELETE" })
+                .then(() => fetchData());
+        }
+    </script>
+</head>
+<body>
+
+    <h2>Node.js CRUD OPERATION project</h2>
+    
+    <input type="text" id="name" placeholder="Enter Name" required>
+    <button id="submit-btn" onclick="handleSubmit()">Add</button>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="data-table-body"></tbody>
+    </table>
+
+</body>
+</html>
